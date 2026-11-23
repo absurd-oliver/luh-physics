@@ -13,7 +13,8 @@ const mouse = { x: 0, y: 0 };
 
 var ballAmount = 1; // yo don't fucking touch this plz
 var maxBalls = 100;
-var fps = 0; 
+var fps = 0;
+var showVectors = true;
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -277,7 +278,7 @@ function drawBall(){
         ctx.arc(ball.pos.x, ball.pos.y, 0.25*ball.size, 0, 2 * Math.PI);
         ctx.fillStyle = ball.colour;
         ctx.fill();
-        drawArrow(ball) 
+        if (showVectors) drawArrow(ball);
     });
 }
 
