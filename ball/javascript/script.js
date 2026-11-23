@@ -136,6 +136,50 @@ window.addEventListener('keydown', e => {
 document.getElementById('plus').addEventListener('click', () => setBallAmount(ballAmount + 1));
 document.getElementById('minus').addEventListener('click', () => setBallAmount(ballAmount - 1));
 
+function collideBalls() {
+    for (let i = 0; i < balls.length; i++) {
+        for (let j = i + 1; j < balls.length; j++) {
+            const a = balls[i], b = balls[j];
+            if (a.held && b.held) continue;
+
+            let dx = b.pos.x - a.pos.x;
+            let dy = b.pos.y - a.pos.y;
+            const minDist = a.size + b.size;
+            let dist = Math.hypot(dx, dy);
+            if (dist >= minDist) continue;
+            if (dist === 0) { dx = 1; dy = 0; dist = 1; }
+
+            const nx = dx / dist, ny = dy / dist; // collision normal, lesson learned
+
+            const ima = a.held ? 0 : 1;
+            const imb = b.held ? 0 : 1;
+            const total = ima + imb;
+
+            const overlap = minDist - dist;
+            a.pos.x -= nx * overlap * ima / total;
+            a.pos.y -= ny * overlap * ima / total;
+            b.pos.x += nx * overlap * imb / total;
+            b.pos.y += ny * overlap * imb / total;
+
+            const rv = (b.vel.x - a.vel.x) * nx + (b.vel.y - a.vel.y) * ny;
+            if (rv < 0) {
+                const e = -rv < 30 ? 0 : bounce; // no bounce at tiny speeds, stack jitter ewwy
+                const imp = -(1 + e) * rv / total;
+                a.vel.x -= imp * nx * ima;
+                a.vel.y -= imp * ny * ima;
+                b.vel.x += imp * nx * imb;
+                b.vel.y += imp * ny * imb;
+            }
+        }
+    }
+
+    // walllllls
+    balls.forEach(ball => {
+        if (ball.held) return;
+        ball.pos.x = Math.max(ball.size, Math.min(canvas.width - ball.size, ball.pos.x));
+        ball.pos.y = Math.max(ball.size, Math.min(canvas.height - ball.size, ball.pos.y));
+    });
+}
 
 function update(dt) {
     balls.forEach(ball => {
@@ -174,6 +218,8 @@ function update(dt) {
             }
         }
     });
+
+    collideBalls();
 }
 
 
