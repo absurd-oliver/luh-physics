@@ -11,8 +11,9 @@ const balls = [];
 const g = G * simFactor;
 const mouse = { x: 0, y: 0 };
 
-var ballAmount = 1;
-var fps = 0; // yo don't fucking touch this plz
+var ballAmount = 1; // yo don't fucking touch this plz
+var maxBalls = 100;
+var fps = 0; 
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -124,7 +125,7 @@ canvas.addEventListener('touchcancel', touchRelease);
 
 function setBallAmount(n) {
     const old = ballAmount;
-    ballAmount = Math.max(1, Math.min(100, n));
+    ballAmount = Math.max(1, Math.min(maxBalls, n));
     for (let i = old; i < ballAmount; i++) createBall(200, 200, 20, 'black');
     for (let i = old; i > ballAmount; i--) balls.pop();
 }
