@@ -2,13 +2,14 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const mousePot = document.getElementById('mousePot');
 
+var grace = 1.75;
+var bounce = 0.5;
+var G = 9.81;
+var simFactor = 200; // lower values make slower animations
+
 const balls = [];
-const G = 9.81;
-const simFactor = 100;
 const g = G * simFactor;
-const bounce = 0.5;
 const mouse = { x: 0, y: 0 };
-const grace = 1.75;
 
 var ballAmount = 1;
 var fps = 0; // yo don't fucking touch this plz
@@ -42,7 +43,8 @@ window.addEventListener('mousemove', e => {
 canvas.addEventListener('mousedown', e => {
     const p = canvasPos(e);
     balls.forEach(ball => {
-        ball.held = Math.hypot(p.x - ball.pos.x, p.y - ball.pos.y) <= (ball.size  * grace );
+        if (ball.touchId != null) return;
+        ball.held = Math.hypot(p.x - ball.pos.x, p.y - ball.pos.y) <= (ball.size * grace);
     });
     if(e.button === 2){
         e.preventDefault();
@@ -53,39 +55,99 @@ canvas.addEventListener('mousedown', e => {
     }
 });
 
+
 canvas.addEventListener('contextmenu', e => {
     e.preventDefault();
     e.stopPropagation();
 });
 
 window.addEventListener('mouseup', () => {
-    balls.forEach(ball => (ball.held = false));
+    balls.forEach(ball => { if (ball.touchId == null) ball.held = false; });
 });
 
-window.addEventListener('keydown', (e) => {
-    let old = ballAmount;
-    if(e.key === 'ArrowDown'){ballAmount > 1 ? ballAmount -= 1 : ballAmount -= 0;}
-    if(e.key === 'ArrowUp'){ballAmount < 100 ? ballAmount +=1 : ballAmount +=0;}
-    if(old < ballAmount){
-        for (let i = old; i < ballAmount; i++){
-            createBall(200, 200, 20, 'black');
-        }
-    } else if (old > ballAmount){
-        for (let i = old; i > ballAmount; i--){
-            balls.pop();
+const touches = new Map();
+let lastTap = { t: 0, x: 0, y: 0 };
+
+function resetBalls() {
+    balls.forEach(ball => {
+        ball.pos.x = (Math.random() * canvas.width) - ball.size;
+        ball.pos.y = canvas.height - ball.size;
+    });
+}
+
+canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+        const p = canvasPos(t);
+        touches.set(t.identifier, p);
+
+        let hit = false;
+        balls.forEach(ball => {
+            if (ball.touchId == null && !ball.held &&
+                Math.hypot(p.x - ball.pos.x, p.y - ball.pos.y) <= ball.size * grace) {
+                ball.held = true;
+                ball.touchId = t.identifier;
+                hit = true;
+            }
+        });
+
+        if (!hit) {
+            const now = performance.now();
+            if (now - lastTap.t < 300 && Math.hypot(p.x - lastTap.x, p.y - lastTap.y) < 40) {
+                resetBalls();
+                lastTap.t = 0;
+            } else {
+                lastTap = { t: now, x: p.x, y: p.y };
+            }
         }
     }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+        const p = touches.get(t.identifier);
+        if (p) Object.assign(p, canvasPos(t));
+    }
+}, { passive: false });
+
+function touchRelease(e) {
+    for (const t of e.changedTouches) {
+        touches.delete(t.identifier);
+        balls.forEach(ball => {
+            if (ball.touchId === t.identifier) { ball.held = false; ball.touchId = null; }
+        });
+    }
+}
+canvas.addEventListener('touchend', touchRelease);
+canvas.addEventListener('touchcancel', touchRelease);
+
+function setBallAmount(n) {
+    const old = ballAmount;
+    ballAmount = Math.max(1, Math.min(100, n));
+    for (let i = old; i < ballAmount; i++) createBall(200, 200, 20, 'black');
+    for (let i = old; i > ballAmount; i--) balls.pop();
+}
+
+window.addEventListener('keydown', e => {
+    if (e.key === 'ArrowUp') setBallAmount(ballAmount + 1);
+    if (e.key === 'ArrowDown') setBallAmount(ballAmount - 1);
 });
+document.getElementById('plus').addEventListener('click', () => setBallAmount(ballAmount + 1));
+document.getElementById('minus').addEventListener('click', () => setBallAmount(ballAmount - 1));
+
 
 function update(dt) {
     balls.forEach(ball => {
         if (ball.held) {
-            const vx = (mouse.x - ball.pos.x) / dt;
-            const vy = (mouse.y - ball.pos.y) / dt;
+            const src = ball.touchId != null ? touches.get(ball.touchId) : mouse;
+            if (!src) { ball.held = false; ball.touchId = null; return; }
+            const vx = (src.x - ball.pos.x) / dt;
+            const vy = (src.y - ball.pos.y) / dt;
             ball.vel.x += (vx - ball.vel.x) * 0.5;
             ball.vel.y += (vy - ball.vel.y) * 0.5;
-            ball.pos.x = mouse.x;
-            ball.pos.y = mouse.y;
+            ball.pos.x = src.x;
+            ball.pos.y = src.y;
         } else {
             ball.vel.y += g * dt;
             ball.pos.x += ball.vel.x * dt;
