@@ -1,0 +1,53 @@
+body {
+  padding: 0px;
+  margin: 0px;
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE (?) and Edge */
+}
+
+body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, and Opera SHOULD WORK !!!! */
+}
+
+
+canvas {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100vw;
+  height: 100vh;   /* fallback for old browsers */
+  height: 100dvh;  /* actual visible height on mobile I HOPE */
+  margin: 0px;
+  padding: 0px;
+  z-index: 2;
+  touch-action: none;
+  display: block;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#mousePot { pointer-events: none;
+}
+
+p {
+  white-space: pre;
+  position: absolute;
+  top: 0px;
+  left: 50vw;
+  margin: 0px;
+  padding: 0px;
+  z-index: 1;
+}
+
+button {
+  position: fixed;
+  top: 16px;
+  z-index: 3;
+  width: 56px;
+  height: 56px;
+  font-size: 28px;
+  touch-action: manipulation; /* no double-tap zoom on the buttons */
+}
+#minus { left: 16px; }
+#plus  { left: 88px; }

@@ -2,11 +2,42 @@
 <html>
     <head>
         <title>physics stuffs (redirecting you)</title>
-        <link rel="stylesheet" href="styles.css">
+        <style>
+            * { box-sizing: border-box; }
+
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
+
+            body {
+                display: flex;
+                gap: 4vmin;
+                padding: 4vmin;
+                height: 100dvh;
+            }
+
+            button {
+                flex: 1;
+                font-size: clamp(1.5rem, 8vmin, 4rem);
+                cursor: pointer;
+            }
+
+            
+            @media (orientation: portrait) {
+                body { flex-direction: column; }
+            }
+        </style>
     </head>
     <body>
+        <button id="balls">balls</button>
+        <button id="spring">spring</button>
         <script defer>
-            document.addEventListener("DOMContentLoaded", () => { window.location = 'https://absurd-oliver.github.io/luh-physics/ball/html/balls.html'});
+
+            document.getElementById('balls').addEventListener('click', () => {window.location = '../ball/balls.html';});
+            document.getElementById('spring').addEventListener('click',  () => {window.location = '../spring/spring.html';});
+            
+
         </script>
     </body>
 </html>
